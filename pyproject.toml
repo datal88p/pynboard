@@ -1,13 +1,17 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
 
 [project]
 name = "pynboard"
-version = "0.0.2"
+version = "0.0.5"
 description = "A better data exploration workflow"
 readme = "README.md"
 requires-python = ">=3.10"
+dynamic = ["dependencies"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
