@@ -1,0 +1,2 @@
+# Exclude everything in the dist/ subfolder
+dist/
