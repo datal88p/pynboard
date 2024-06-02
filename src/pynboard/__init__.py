@@ -1,7 +1,7 @@
 from typing import Optional
 
-from core import Board
-from utils import create_default_board
+from pynboard.core import Board
+from pynboard.utils import create_default_board
 
 _active_board: Optional[Board] = None
 

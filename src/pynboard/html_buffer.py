@@ -1,23 +1,12 @@
 import warnings
-from typing import Iterable
 from typing import List
 from typing import Optional
-from typing import Protocol
-
-import numpy as np
-import pandas as pd
-
-from pathlib import Path
-import warnings
-import webbrowser
 
 import numpy as np
 import pandas as pd
 import pandas.io.formats.style
-import plotly.io as pio
 import plotly.graph_objects as go
-
-import tempfile
+import plotly.io as pio
 
 
 class HtmlBuffer:
@@ -47,9 +36,9 @@ class HtmlBuffer:
 
 def _obj_to_html(obj, **kwargs) -> str:
     if isinstance(obj, (list, tuple)):
-        out_html = _obj_grid_to_html(obj)
+        out_html = _obj_grid_to_html(obj, **kwargs)
     else:
-        out_html = _obj_single_to_html(obj)
+        out_html = _obj_single_to_html(obj, **kwargs)
     return out_html
 
 

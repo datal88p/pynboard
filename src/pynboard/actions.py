@@ -3,8 +3,8 @@ import webbrowser
 from pathlib import Path
 from typing import Optional
 
-from core import Buffer
-from html_buffer import HtmlBuffer
+from pynboard.core import Buffer
+from pynboard.html_buffer import HtmlBuffer
 
 
 def _gen_tempfile(suffix: Optional[str] = None):
