@@ -82,6 +82,8 @@ def _obj_grid_to_html(objs, **kwargs):
 _FONT_FAM = 'menlo,consolas,monospace'
 _FONT_SZ = "0.8em"
 
+_HEADER_COLOR = "rgba(177, 223, 252, 1)"
+
 _DATA_FRAME_STYLES = [
     # Table styles
     {
@@ -94,7 +96,7 @@ _DATA_FRAME_STYLES = [
         ],
     },
     # Header row style
-    {"selector": "thead", "props": [("background-color", "rgba(135, 206, 250, 0.5)")]},
+    {"selector": "thead", "props": [("background-color", _HEADER_COLOR)]},
     # Header cell style
     {
         "selector": "th",
@@ -104,6 +106,10 @@ _DATA_FRAME_STYLES = [
             ("font-family", _FONT_FAM),
             ("font-size", _FONT_SZ),
             ("text-align", "right"),
+            # sticky header
+            ("position", "sticky"),
+            ("top", "0px"),
+            ("background-color", _HEADER_COLOR),
         ],
     },
     # Body cell style
@@ -163,9 +169,6 @@ def _generate_frame_style(df_in, index=None):
     # index display
     if not index:
         style_out.hide()
-
-    # sticky header
-    style_out.set_sticky(axis=1, pixel_size=50)
 
     return style_out
 
