@@ -83,7 +83,7 @@ def _obj_grid_to_html(objs, **kwargs):
 _FONT_FAM = 'menlo,consolas,monospace'
 _FONT_SZ = "0.8em"
 
-_HEADER_COLOR = "rgba(177, 223, 252, 1)"
+_HEADER_COLOR = "rgba(214, 234, 248, 1)"
 
 _DATA_FRAME_STYLES = [
     # Table styles
@@ -124,8 +124,9 @@ _DATA_FRAME_STYLES = [
             ("text-align", "right"),
         ],
     },
-    # Hover effect
+    # zebra
     {"selector": "tr:nth-child(even)", "props": [("background-color", "#F0F0F0")]},
+    # hover effect
     {"selector": "tr:hover", "props": [("background-color", "lightyellow")]},
 ]
 
@@ -178,15 +179,30 @@ def _date_only_dt_formatter(x):
     return out
 
 
+def _apply_sticky_headers(style):
+    style.set_sticky(axis=1)
+    for style_i in style.table_styles:
+        sel = style_i.get("selector")
+        if sel and sel.startswith("thead"):
+            props = style_i["props"]
+            props = [p_i for p_i in props if p_i[0] != "background-color"]
+            props.append(("background-color", _HEADER_COLOR))
+            style_i["props"] = props
+
+    return style
+
+
+
 def _generate_frame_style(df_in, index=None):
     if index is None:
         index = True
+
+    style_out = df_in.style.set_table_styles(_DATA_FRAME_STYLES)
 
     # precision
     idx_num_cols = _get_numeric_col_indices(df_in)
     prec = _get_default_numeric_col_display_precision(df_in.iloc[:, idx_num_cols])
     num_cols = df_in.columns[idx_num_cols]
-    style_out = df_in.style.set_table_styles(_DATA_FRAME_STYLES)
     for i0, c0 in enumerate(num_cols):
         style_out.format(precision=prec[i0], subset=c0, thousands=",")
 
@@ -200,6 +216,8 @@ def _generate_frame_style(df_in, index=None):
         if pd.api.types.is_datetime64_any_dtype(idx_vals):
             if _is_date_only_dt_column(idx_vals):
                 style_out.format_index(formatter=_date_only_dt_formatter, level=lvl)
+
+    _apply_sticky_headers(style_out)
 
     # index display
     if not index:
