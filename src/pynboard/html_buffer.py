@@ -3,6 +3,7 @@ from typing import List
 from typing import Optional
 from typing import Union
 
+import markdown
 import numpy as np
 import pandas as pd
 import pandas.io.formats.style
@@ -22,7 +23,10 @@ class HtmlBuffer:
         self._buffer_data.append(html)
 
     def render(self):
-        self._rendered = "\n<br>\n".join(self._buffer_data)
+        base = "\n<br>\n".join(self._buffer_data)
+        # include style for text rendering
+        final = f"{_TEXT_CSS_STYLE}\n\n\n{base}"
+        self._rendered = final
 
     @property
     def rendered(self):
@@ -45,20 +49,23 @@ def _obj_to_html(obj, **kwargs) -> str:
 
 def _obj_single_to_html(obj, **kwargs):
     if isinstance(obj, go.Figure):
-        html0 = pio.to_html(obj, full_html=False)
+        html_out = pio.to_html(obj, full_html=False)
     elif isinstance(obj, pandas.io.formats.style.Styler):
-        html0 = obj.to_html()
+        html_out = obj.to_html()
     elif isinstance(obj, (pd.DataFrame, pd.Series)):
         if isinstance(obj, pd.Series):
             obj = obj.to_frame()
-        html0 = _generate_frame_style(
+        html_out = _generate_frame_style(
             obj, index=kwargs.get("index", True), title=kwargs.get("title")
         ).to_html()
     elif isinstance(obj, str):
-        html0 = obj
+        if kwargs.get("raw_string", False):
+            html_out = obj
+        else:
+            html_out = markdown.markdown(obj)
     else:
         raise TypeError("unexpected object type {}".format(type(obj)))
-    return html0
+    return html_out
 
 
 def _obj_grid_to_html(objs, **kwargs):
@@ -141,8 +148,8 @@ _DATA_FRAME_STYLES = [
             ("padding-bottom", "1em"),
         ],
     },
-
 ]
+
 
 def _get_numeric_col_indices(df_in):
     is_numeric = [pd.api.types.is_numeric_dtype(df_in[col]) for col in df_in.columns]
@@ -205,7 +212,6 @@ def _apply_sticky_headers(style):
     return style
 
 
-
 def _generate_frame_style(df_in, index=None, title=None):
     if index is None:
         index = True
@@ -241,5 +247,151 @@ def _generate_frame_style(df_in, index=None, title=None):
         style_out.hide()
 
     return style_out
+
+
+# endregion
+
+# region CSS for text
+
+_TEXT_CSS_STYLE = """
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+        line-height: 1.5;
+        color: #24292e;
+        background-color: #ffffff;
+        padding: 20px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        margin-top: 24px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #eaecef;
+        padding-bottom: 0.3em;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    h3 {
+        font-size: 1.25em;
+    }
+
+    h4 {
+        font-size: 1em;
+    }
+
+    h5 {
+        font-size: 0.875em;
+    }
+
+    h6 {
+        font-size: 0.85em;
+        color: #6a737d;
+    }
+
+    p {
+        margin-top: 0;
+        margin-bottom: 16px;
+    }
+
+    a {
+        color: #0366d6;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    blockquote {
+        padding: 0 1em;
+        color: #6a737d;
+        border-left: 0.25em solid #dfe2e5;
+        margin-top: 0;
+        margin-bottom: 16px;
+    }
+
+    ul, ol {
+        padding-left: 2em;
+        margin-top: 0;
+        margin-bottom: 16px;
+    }
+
+    ul {
+        list-style-type: disc;
+    }
+
+    ol {
+        list-style-type: decimal;
+    }
+
+    code {
+        background-color: rgba(27,31,35,0.05);
+        padding: 0.2em 0.4em;
+        margin: 0;
+        font-size: 85%;
+        border-radius: 3px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    }
+
+    pre {
+        background-color: #f6f8fa;
+        padding: 16px;
+        overflow: auto;
+        line-height: 1.45;
+        border-radius: 3px;
+        margin-top: 0;
+        margin-bottom: 16px;
+        border: 1px solid #e1e4e8;
+    }
+
+    pre code {
+        background: none;
+        padding: 0;
+        font-size: 100%;
+        border: 0;
+    }
+
+    table {
+        /* width: 100%; */
+        overflow: auto;
+        margin-top: 0;
+        margin-bottom: 16px;
+        border-collapse: collapse;
+    }
+
+    table th {
+        font-weight: 600;
+        padding: 6px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table td {
+        padding: 6px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr {
+        background-color: #ffffff;
+        border-top: 1px solid #c6cbd1;
+    }
+
+    table tr:nth-child(2n) {
+        background-color: #f6f8fa;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+"""
 
 # endregion
