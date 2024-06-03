@@ -21,11 +21,8 @@ def _gen_tempfile(suffix: Optional[str] = None):
 _META_KEY_SAVED_BUFFER_PATH = "saved_buffer_path"
 
 
-def dump_rendered_to_tempfile(buffer: Buffer, meta: dict) -> None:
-    suffix = None
-    if isinstance(buffer, HtmlBuffer):
-        suffix = ".html"
-
+def dump_rendered_to_html_tempfile(buffer: Buffer, meta: dict) -> None:
+    suffix = ".html"
     with _gen_tempfile(suffix=suffix) as f:
         f.write(buffer.rendered)
         meta[_META_KEY_SAVED_BUFFER_PATH] = Path(f.name)

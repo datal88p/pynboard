@@ -9,7 +9,11 @@ import pandas as pd
 import pandas.io.formats.style
 import plotly.graph_objects as go
 import plotly.io as pio
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
+import io
+import base64
 
 class HtmlBuffer:
     _buffer_data: List[str]
@@ -47,17 +51,50 @@ def _obj_to_html(obj, **kwargs) -> str:
     return out_html
 
 
+def _matplotlib_to_html(obj):
+    if isinstance(obj, Axes):
+        obj = obj.figure
+
+    # figure to buffer
+    buf = io.BytesIO()
+    obj.savefig(buf, format="png")
+    buf.seek(0)
+    # buffer to base64 string
+    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+    # html element
+    html = f"""<img src="data:image/png;base64,{img_base64}">"""
+
+    # png above probably better but will reassess...
+    # # figure to buffer
+    # buf = io.BytesIO()
+    # obj.savefig(buf, format="svg")
+    # buf.seek(0)
+    # # buffer to base64 string
+    # img_svg = buf.getvalue().decode('utf-8')
+    # # html element
+    # html = f"""<div>{img_svg}</div>"""
+
+
+    return html
+
 def _obj_single_to_html(obj, **kwargs):
+    # plotly
     if isinstance(obj, go.Figure):
         html_out = pio.to_html(obj, full_html=False)
+    # matplotlib
+    elif isinstance(obj, (Axes, Figure)):
+        html_out = _matplotlib_to_html(obj)
+    # pandas
     elif isinstance(obj, pandas.io.formats.style.Styler):
         html_out = obj.to_html()
+    # pandas
     elif isinstance(obj, (pd.DataFrame, pd.Series)):
         if isinstance(obj, pd.Series):
             obj = obj.to_frame()
         html_out = _generate_frame_style(
             obj, index=kwargs.get("index", True), title=kwargs.get("title")
         ).to_html()
+    # text
     elif isinstance(obj, str):
         if kwargs.get("raw_string", False):
             html_out = obj
