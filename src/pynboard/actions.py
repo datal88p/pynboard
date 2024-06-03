@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional
 
 from pynboard.core import Buffer
-from pynboard.html_buffer import HtmlBuffer
 
 
 def _gen_tempfile(suffix: Optional[str] = None):
@@ -21,11 +20,23 @@ def _gen_tempfile(suffix: Optional[str] = None):
 _META_KEY_SAVED_BUFFER_PATH = "saved_buffer_path"
 
 
-def dump_rendered_to_html_tempfile(buffer: Buffer, meta: dict) -> None:
-    suffix = ".html"
-    with _gen_tempfile(suffix=suffix) as f:
-        f.write(buffer.rendered)
-        meta[_META_KEY_SAVED_BUFFER_PATH] = Path(f.name)
+def dump_rendered_to_html_file(buffer: Buffer, meta: dict, path=None) -> None:
+    # path is provided
+    if path is not None:
+        path = Path(path)
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True)
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(buffer.rendered)
+    # otherwise use a tempfile
+    else:
+        suffix = ".html"
+        with _gen_tempfile(suffix=suffix) as f:
+            f.write(buffer.rendered)
+            path = Path(f.name)
+
+    meta[_META_KEY_SAVED_BUFFER_PATH] = path
 
 
 def open_saved_buffer_in_browser(buffer: Buffer, meta: dict) -> None:
