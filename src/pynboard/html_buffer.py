@@ -1,6 +1,7 @@
 import warnings
 from typing import List
 from typing import Optional
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -139,6 +140,7 @@ def _get_default_numeric_col_display_precision(data_in):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning)
 
+        # TODO: comment on the display precision heuristic
         max_prec = 4
         mad = abs(data_in - data_in.median()).median()
         prec_mad = np.floor(np.log10(mad)) - 1
@@ -154,6 +156,28 @@ def _get_default_numeric_col_display_precision(data_in):
         return out
 
 
+def _is_date_only_dt_column(col: Union[pd.Series, pd.Index]) -> bool:
+    is_series = isinstance(col, pd.Series)
+    if is_series:
+        floored = col.dt.floor("D")
+    else:
+        floored = col.floor("D")
+    deltas = col - floored
+
+    if is_series:
+        secs = deltas.dt.total_seconds()
+    else:
+        secs = deltas.total_seconds()
+
+    out = np.allclose(secs, 0)
+    return out
+
+
+def _date_only_dt_formatter(x):
+    out = x.strftime("%Y-%m-%d")
+    return out
+
+
 def _generate_frame_style(df_in, index=None):
     if index is None:
         index = True
@@ -165,6 +189,17 @@ def _generate_frame_style(df_in, index=None):
     style_out = df_in.style.set_table_styles(_DATA_FRAME_STYLES)
     for i0, c0 in enumerate(num_cols):
         style_out.format(precision=prec[i0], subset=c0, thousands=",")
+
+    # datetime
+    dt_cols = [c for c in df_in if pd.api.types.is_datetime64_any_dtype(df_in[c])]
+    date_only_dt_cols = [c for c in dt_cols if _is_date_only_dt_column(df_in[c])]
+    style_out.format(formatter=_date_only_dt_formatter, subset=date_only_dt_cols)
+
+    for lvl in range(df_in.index.nlevels):
+        idx_vals = df_in.index.get_level_values(lvl)
+        if pd.api.types.is_datetime64_any_dtype(idx_vals):
+            if _is_date_only_dt_column(idx_vals):
+                style_out.format_index(formatter=_date_only_dt_formatter, level=lvl)
 
     # index display
     if not index:
