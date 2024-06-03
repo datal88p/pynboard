@@ -51,7 +51,9 @@ def _obj_single_to_html(obj, **kwargs):
     elif isinstance(obj, (pd.DataFrame, pd.Series)):
         if isinstance(obj, pd.Series):
             obj = obj.to_frame()
-        html0 = _generate_frame_style(obj, index=kwargs.get("index", True)).to_html()
+        html0 = _generate_frame_style(
+            obj, index=kwargs.get("index", True), title=kwargs.get("title")
+        ).to_html()
     elif isinstance(obj, str):
         html0 = obj
     else:
@@ -128,8 +130,19 @@ _DATA_FRAME_STYLES = [
     {"selector": "tr:nth-child(even)", "props": [("background-color", "#F0F0F0")]},
     # hover effect
     {"selector": "tr:hover", "props": [("background-color", "lightyellow")]},
-]
+    # title
+    {
+        "selector": "caption",
+        "props": [
+            ("font-family", _FONT_FAM),
+            ("font-size", "1em"),
+            ("text-align", "left"),
+            ("font-weight", "700"),
+            ("padding-bottom", "1em"),
+        ],
+    },
 
+]
 
 def _get_numeric_col_indices(df_in):
     is_numeric = [pd.api.types.is_numeric_dtype(df_in[col]) for col in df_in.columns]
@@ -193,11 +206,15 @@ def _apply_sticky_headers(style):
 
 
 
-def _generate_frame_style(df_in, index=None):
+def _generate_frame_style(df_in, index=None, title=None):
     if index is None:
         index = True
 
     style_out = df_in.style.set_table_styles(_DATA_FRAME_STYLES)
+
+    # title
+    if title is not None:
+        style_out.set_caption(title)
 
     # precision
     idx_num_cols = _get_numeric_col_indices(df_in)
