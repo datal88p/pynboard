@@ -240,6 +240,7 @@ def _generate_frame_style(df_in, index=None, title=None):
             if _is_date_only_dt_column(idx_vals):
                 style_out.format_index(formatter=_date_only_dt_formatter, level=lvl)
 
+    # headers
     _apply_sticky_headers(style_out)
 
     # index display
@@ -371,11 +372,13 @@ _TEXT_CSS_STYLE = """
         font-weight: 600;
         padding: 6px 13px;
         border: 1px solid #dfe2e5;
+        vertical-align: top;
     }
 
     table td {
         padding: 6px 13px;
         border: 1px solid #dfe2e5;
+        vertical-align: top;
     }
 
     table tr {
@@ -383,9 +386,11 @@ _TEXT_CSS_STYLE = """
         border-top: 1px solid #c6cbd1;
     }
 
+    /*
     table tr:nth-child(2n) {
         background-color: #f6f8fa;
     }
+    */
 
     img {
         max-width: 100%;
