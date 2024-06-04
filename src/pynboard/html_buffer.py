@@ -1,3 +1,5 @@
+import base64
+import io
 import warnings
 from typing import List
 from typing import Optional
@@ -10,10 +12,9 @@ import pandas.io.formats.style
 import plotly.graph_objects as go
 import plotly.io as pio
 from matplotlib.axes import Axes
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 
-import io
-import base64
 
 class HtmlBuffer:
     _buffer_data: List[str]
@@ -74,8 +75,8 @@ def _matplotlib_to_html(obj):
     # # html element
     # html = f"""<div>{img_svg}</div>"""
 
-
     return html
+
 
 def _obj_single_to_html(obj, **kwargs):
     # plotly
@@ -92,7 +93,15 @@ def _obj_single_to_html(obj, **kwargs):
         if isinstance(obj, pd.Series):
             obj = obj.to_frame()
         html_out = _generate_frame_style(
-            obj, index=kwargs.get("index", True), title=kwargs.get("title")
+            obj,
+            index=kwargs.get("index", True),
+            title=kwargs.get("title"),
+            grad_subset=kwargs.get("grad_subset"),
+            grad_cmap=kwargs.get("grad_cmap"),
+            grad_axis=kwargs.get("grad_axis", 0),
+            grad_reversed=kwargs.get("grad_reversed", False),
+            grad_vmin=kwargs.get("grad_vmin"),
+            grad_vmax=kwargs.get("grad_vmax"),
         ).to_html()
     # text
     elif isinstance(obj, str):
@@ -249,7 +258,23 @@ def _apply_sticky_headers(style):
     return style
 
 
-def _generate_frame_style(df_in, index=None, title=None):
+_DEFAULT_FRAME_GRAD_CMAP = LinearSegmentedColormap.from_list(
+    "pynboard_default_cmap",
+    colors=[(1, 0.7, 0.6), "white", (0.8, 1, 0.8)],
+)
+
+
+def _generate_frame_style(
+        df_in,
+        index=None,
+        title=None,
+        grad_subset=None,
+        grad_cmap=None,
+        grad_axis=0,
+        grad_reversed=False,
+        grad_vmin=None,
+        grad_vmax=None
+):
     if index is None:
         index = True
 
@@ -279,6 +304,27 @@ def _generate_frame_style(df_in, index=None, title=None):
 
     # headers
     _apply_sticky_headers(style_out)
+
+    # gradient
+    if grad_subset is not None:
+        if isinstance(grad_subset, str) and grad_subset.lower() == "all":
+            subset = None
+        else:
+            subset = grad_subset
+
+        if grad_cmap is None:
+            grad_cmap = _DEFAULT_FRAME_GRAD_CMAP
+
+        if grad_reversed:
+            grad_cmap = grad_cmap.reversed()
+
+        style_out.background_gradient(
+            cmap=grad_cmap,
+            axis=grad_axis,
+            subset=subset,
+            vmin=grad_vmin,
+            vmax=grad_vmax,
+        )
 
     # index display
     if not index:
