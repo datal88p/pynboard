@@ -4,6 +4,7 @@ from typing import Optional
 from pynboard.core import Board
 from pynboard.core import PostRenderAction
 from pynboard.utils import create_default_board
+from pynboard.utils import init_html_board
 
 _active_board: Optional[Board] = None
 
@@ -15,6 +16,8 @@ __all__ = [
     "get_active_board",
     "set_active_board",
     "set_post_render_actions",
+    "create_default_board",
+    "init_html_board",
 ]
 
 
