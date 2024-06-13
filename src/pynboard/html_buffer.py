@@ -22,10 +22,15 @@ class HtmlBuffer:
 
     def __init__(self):
         self._buffer_data = []
+        self._plotly_included = False
 
     def append(self, obj, **kwargs) -> None:
-        html = _obj_to_html(obj, **kwargs)
+        include_plotly = not self._plotly_included
+        html = _obj_to_html(obj, include_plotly=include_plotly, **kwargs)
         self._buffer_data.append(html)
+
+        if _contains_plotly_figure(obj):
+            self._plotly_included = True
 
     def render(self):
         base = "\n<br>\n".join(self._buffer_data)
@@ -40,15 +45,16 @@ class HtmlBuffer:
     def reset(self):
         self._buffer_data = []
         self._rendered = None
+        self._plotly_included = False
 
 
 # region html conversion
 
-def _obj_to_html(obj, **kwargs) -> str:
+def _obj_to_html(obj, include_plotly: bool = True, **kwargs) -> str:
     if isinstance(obj, (list, tuple)):
-        out_html = _obj_grid_to_html(obj, **kwargs)
+        out_html = _obj_grid_to_html(obj, include_plotly=include_plotly, **kwargs)
     else:
-        out_html = _obj_single_to_html(obj, **kwargs)
+        out_html = _obj_single_to_html(obj, include_plotly=include_plotly, **kwargs)
     return out_html
 
 
@@ -78,10 +84,24 @@ def _matplotlib_to_html(obj):
     return html
 
 
-def _obj_single_to_html(obj, **kwargs):
+def _is_obj_plotly(obj):
+    return isinstance(obj, go.Figure)
+
+
+def _contains_plotly_figure(obj):
+    if isinstance(obj, (list, tuple)):
+        for el in obj:
+            has_plotly = _contains_plotly_figure(el)
+            if has_plotly:
+                return True
+    else:
+        return _is_obj_plotly(obj)
+
+
+def _obj_single_to_html(obj, include_plotly: bool = True, **kwargs):
     # plotly
-    if isinstance(obj, go.Figure):
-        html_out = pio.to_html(obj, full_html=False)
+    if _is_obj_plotly(obj):
+        html_out = pio.to_html(obj, full_html=False, include_plotlyjs=include_plotly)
     # matplotlib
     elif isinstance(obj, (Axes, Figure)):
         html_out = _matplotlib_to_html(obj)
@@ -114,15 +134,20 @@ def _obj_single_to_html(obj, **kwargs):
     return html_out
 
 
-def _obj_grid_to_html(objs, **kwargs):
+def _obj_grid_to_html(objs, include_plotly: bool = True, **kwargs):
     html_out_list = ["<table>"]
     if (len(objs) > 0) and (not isinstance(objs[0], (list, tuple))):
         objs = [objs]
     for obj_row in objs:
         html_out_list.append("<tr>")
         for obj in obj_row:
-            html0 = _obj_single_to_html(obj, **kwargs)
+            html0 = _obj_single_to_html(obj, include_plotly=include_plotly, **kwargs)
             html_out_list.append(f"<td>{html0}</td>")
+
+            # ensure we only include plotly once
+            if _is_obj_plotly(obj):
+                include_plotly = False
+
         html_out_list.append("</tr>")
 
     html_out_list.append("</table>")
