@@ -2,9 +2,11 @@ from typing import Iterable
 from typing import Optional
 from typing import Protocol
 
+from pynboard.display_properties import DisplayPropertiesType
+
 
 class Buffer(Protocol):
-    def append(self, obj, **kwargs) -> None:
+    def append(self, obj, display_properties: Optional[DisplayPropertiesType] = None) -> None:
         pass
 
     def render(self):
@@ -15,9 +17,6 @@ class Buffer(Protocol):
         return None
 
     def reset(self):
-        pass
-
-    def set_post_render_actions(self):
         pass
 
 
@@ -33,8 +32,8 @@ class Board:
     def __init__(self, buffer: Buffer):
         self.buffer = buffer
 
-    def append(self, obj, **kwargs):
-        self.buffer.append(obj, **kwargs)
+    def append(self, obj, display_properties: Optional[DisplayPropertiesType] = None):
+        self.buffer.append(obj, display_properties)
 
     def render(self):
         self.buffer.render()

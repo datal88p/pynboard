@@ -14,6 +14,9 @@ import plotly.io as pio
 from matplotlib.axes import Axes
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
+from pynboard.display_properties import DisplayPropertiesDataFrame
+from pynboard.display_properties import DisplayPropertiesStr
+from pynboard.display_properties import DisplayPropertiesType
 
 
 class HtmlBuffer:
@@ -24,9 +27,9 @@ class HtmlBuffer:
         self._buffer_data = []
         self._plotly_included = False
 
-    def append(self, obj, **kwargs) -> None:
+    def append(self, obj, display_properties: Optional[DisplayPropertiesType] = None) -> None:
         include_plotly = not self._plotly_included
-        html = _obj_to_html(obj, include_plotly=include_plotly, **kwargs)
+        html = _obj_to_html(obj, include_plotly=include_plotly, display_properties=display_properties)
         self._buffer_data.append(html)
 
         if _contains_plotly_figure(obj):
@@ -50,11 +53,11 @@ class HtmlBuffer:
 
 # region html conversion
 
-def _obj_to_html(obj, include_plotly: bool = True, **kwargs) -> str:
+def _obj_to_html(obj, include_plotly: bool = True, display_properties: Optional[DisplayPropertiesType] = None) -> str:
     if isinstance(obj, (list, tuple)):
-        out_html = _obj_grid_to_html(obj, include_plotly=include_plotly, **kwargs)
+        out_html = _obj_grid_to_html(obj, include_plotly=include_plotly, display_properties=display_properties)
     else:
-        out_html = _obj_single_to_html(obj, include_plotly=include_plotly, **kwargs)
+        out_html = _obj_single_to_html(obj, include_plotly=include_plotly, display_properties=display_properties)
     return out_html
 
 
@@ -98,7 +101,8 @@ def _contains_plotly_figure(obj):
         return _is_obj_plotly(obj)
 
 
-def _obj_single_to_html(obj, include_plotly: bool = True, **kwargs):
+def _obj_single_to_html(obj, include_plotly: bool = True,
+                        display_properties: Optional[DisplayPropertiesType] = None) -> str:
     # plotly
     if _is_obj_plotly(obj):
         html_out = pio.to_html(obj, full_html=False, include_plotlyjs=include_plotly)
@@ -110,25 +114,22 @@ def _obj_single_to_html(obj, include_plotly: bool = True, **kwargs):
         html_out = obj.to_html()
     # pandas
     elif isinstance(obj, (pd.DataFrame, pd.Series)):
+        if not isinstance(display_properties, DisplayPropertiesDataFrame):
+            display_properties = DisplayPropertiesDataFrame()
+
         if isinstance(obj, pd.Series):
             obj = obj.to_frame()
-        html_out = _generate_frame_style(
-            obj,
-            index=kwargs.get("index", True),
-            title=kwargs.get("title"),
-            grad_subset=kwargs.get("grad_subset"),
-            grad_cmap=kwargs.get("grad_cmap"),
-            grad_axis=kwargs.get("grad_axis", 0),
-            grad_reversed=kwargs.get("grad_reversed", False),
-            grad_vmin=kwargs.get("grad_vmin"),
-            grad_vmax=kwargs.get("grad_vmax"),
-        ).to_html()
+
+        html_out = _generate_frame_style(obj, display_properties=display_properties).to_html()
     # text
     elif isinstance(obj, str):
-        if kwargs.get("raw_string", False):
-            html_out = obj
-        else:
+        if not isinstance(display_properties, DisplayPropertiesStr):
+            display_properties = DisplayPropertiesStr()
+
+        if display_properties.is_markdown:
             html_out = markdown.markdown(obj)
+        else:
+            html_out = obj
     else:
         raise TypeError("unexpected object type {}".format(type(obj)))
     return html_out
@@ -291,23 +292,17 @@ _DEFAULT_FRAME_GRAD_CMAP = LinearSegmentedColormap.from_list(
 
 def _generate_frame_style(
         df_in,
-        index=None,
-        title=None,
-        grad_subset=None,
-        grad_cmap=None,
-        grad_axis=0,
-        grad_reversed=False,
-        grad_vmin=None,
-        grad_vmax=None
+        display_properties: DisplayPropertiesDataFrame,
 ):
+    index = display_properties.index
     if index is None:
         index = True
 
     style_out = df_in.style.set_table_styles(_DATA_FRAME_STYLES)
 
     # title
-    if title is not None:
-        style_out.set_caption(title)
+    if display_properties.title is not None:
+        style_out.set_caption(display_properties.title)
 
     # precision
     idx_num_cols = _get_numeric_col_indices(df_in)
@@ -331,24 +326,25 @@ def _generate_frame_style(
     _apply_sticky_headers(style_out)
 
     # gradient
-    if grad_subset is not None:
-        if isinstance(grad_subset, str) and grad_subset.lower() == "all":
+    if display_properties.bg_grad_subset is not None:
+        if isinstance(display_properties.bg_grad_subset, str) and display_properties.bg_grad_subset.lower() == "all":
             subset = None
         else:
-            subset = grad_subset
+            subset = display_properties.bg_grad_subset
 
+        grad_cmap = display_properties.bg_grad_cmap
         if grad_cmap is None:
             grad_cmap = _DEFAULT_FRAME_GRAD_CMAP
 
-        if grad_reversed:
-            grad_cmap = grad_cmap.reversed()
+        if display_properties.bg_grad_reversed:
+            grad_cmap = display_properties.bg_grad_cmap.reversed()
 
         style_out.background_gradient(
             cmap=grad_cmap,
-            axis=grad_axis,
+            axis=display_properties.bg_grad_axis,
             subset=subset,
-            vmin=grad_vmin,
-            vmax=grad_vmax,
+            vmin=display_properties.bg_grad_vmin,
+            vmax=display_properties.bg_grad_vmax,
         )
 
     # index display

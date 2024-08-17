@@ -3,8 +3,11 @@ from typing import Optional
 
 from pynboard.core import Board
 from pynboard.core import PostRenderAction
+from pynboard.display_properties import DisplayPropertiesType
 from pynboard.utils import create_default_board
 from pynboard.utils import init_html_board
+from pynboard.utils import dprops_df
+from pynboard.utils import dprops_str
 
 _active_board: Optional[Board] = None
 
@@ -18,6 +21,8 @@ __all__ = [
     "set_post_render_actions",
     "create_default_board",
     "init_html_board",
+    "dprops_df",
+    "dprops_str",
 ]
 
 
@@ -39,9 +44,9 @@ def set_post_render_actions(actions: Iterable[PostRenderAction]) -> None:
     board.set_post_render_actions(actions)
 
 
-def append(obj, **kwargs) -> None:
+def append(obj, display_properties: Optional[DisplayPropertiesType] = None) -> None:
     board = get_active_board()
-    board.append(obj, **kwargs)
+    board.append(obj, display_properties=display_properties)
 
 
 def render():
@@ -49,9 +54,9 @@ def render():
     board.render()
 
 
-def render_obj(obj, **kwargs) -> None:
+def render_obj(obj, display_properties: Optional[DisplayPropertiesType] = None) -> None:
     board = get_active_board()
-    board.append(obj, **kwargs)
+    board.append(obj, display_properties=display_properties)
     board.render()
 
 

@@ -2,11 +2,14 @@ from functools import partial
 from pathlib import Path
 from typing import Iterable
 from typing import Optional
+from typing import Sequence
 from typing import Union
 
 from pynboard import actions
 from pynboard.core import Board
 from pynboard.core import PostRenderAction
+from pynboard.display_properties import DisplayPropertiesDataFrame
+from pynboard.display_properties import DisplayPropertiesStr
 from pynboard.html_buffer import HtmlBuffer
 
 
@@ -52,4 +55,34 @@ def action_sequence_html_file(file_path=None, open_file=False, reset_buffer=True
     if reset_buffer:
         out.append(actions.reset_buffer)
 
+    return out
+
+
+def dprops_df(
+        index: Optional[bool] = None,
+        title: Optional[str] = None,
+        bg_grad_subset: Optional[Union[str, Sequence[str]]] = None,
+        bg_grad_cmap: Optional[object] = None,
+        bg_grad_axis: Optional[int] = 0,
+        bg_grad_reversed: bool = False,
+        bg_grad_vmin: Optional[float] = None,
+        bg_grad_vmax: Optional[float] = None,
+) -> DisplayPropertiesDataFrame:
+    out = DisplayPropertiesDataFrame(
+        index=index,
+        title=title,
+        bg_grad_subset=bg_grad_subset,
+        bg_grad_cmap=bg_grad_cmap,
+        bg_grad_axis=bg_grad_axis,
+        bg_grad_reversed=bg_grad_reversed,
+        bg_grad_vmin=bg_grad_vmin,
+        bg_grad_vmax=bg_grad_vmax,
+    )
+    return out
+
+
+def dprops_str(is_markdown: bool = True) -> DisplayPropertiesStr:
+    out = DisplayPropertiesStr(
+        is_markdown=is_markdown,
+    )
     return out
