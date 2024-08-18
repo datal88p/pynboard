@@ -1,5 +1,6 @@
 from functools import partial
 from pathlib import Path
+from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import Sequence
@@ -61,6 +62,7 @@ def action_sequence_html_file(file_path=None, open_file=False, reset_buffer=True
 def dprops_df(
         index: Optional[bool] = None,
         title: Optional[str] = None,
+        precision: Optional[Union[int, Dict[object, int]]] = None,
         bg_grad_subset: Optional[Union[str, Sequence[str]]] = None,
         bg_grad_cmap: Optional[object] = None,
         bg_grad_axis: Optional[int] = 0,
@@ -71,6 +73,7 @@ def dprops_df(
     out = DisplayPropertiesDataFrame(
         index=index,
         title=title,
+        precision=precision,
         bg_grad_subset=bg_grad_subset,
         bg_grad_cmap=bg_grad_cmap,
         bg_grad_axis=bg_grad_axis,

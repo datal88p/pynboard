@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict
 from typing import Optional
 from typing import Sequence
 from typing import Union
@@ -8,6 +9,7 @@ from typing import Union
 class DisplayPropertiesDataFrame:
     index: Optional[bool] = None
     title: Optional[str] = None
+    precision: Optional[Union[int, Dict[object, int]]] = None
     bg_grad_subset: Optional[Union[str, Sequence[str]]] = None
     bg_grad_cmap: Optional[object] = None
     bg_grad_axis: Optional[int] = 0

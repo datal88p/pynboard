@@ -14,6 +14,7 @@ import plotly.io as pio
 from matplotlib.axes import Axes
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
+from pandas.api.types import is_integer
 from pynboard.display_properties import DisplayPropertiesDataFrame
 from pynboard.display_properties import DisplayPropertiesStr
 from pynboard.display_properties import DisplayPropertiesType
@@ -306,10 +307,20 @@ def _generate_frame_style(
 
     # precision
     idx_num_cols = _get_numeric_col_indices(df_in)
-    prec = _get_default_numeric_col_display_precision(df_in.iloc[:, idx_num_cols])
+    if is_integer(display_properties.precision):
+        prec = [display_properties.precision] * len(idx_num_cols)
+    else:
+        prec = _get_default_numeric_col_display_precision(df_in.iloc[:, idx_num_cols])
+
+    if isinstance(display_properties.precision, dict):
+        prec_override_dict = display_properties.precision
+    else:
+        prec_override_dict = dict()
+
     num_cols = df_in.columns[idx_num_cols]
     for i0, c0 in enumerate(num_cols):
-        style_out.format(precision=prec[i0], subset=c0, thousands=",")
+        prec_i = prec_override_dict[c0] if c0 in prec_override_dict else prec[i0]
+        style_out.format(precision=prec_i, subset=c0, thousands=",")
 
     # datetime
     dt_cols = [c for c in df_in if pd.api.types.is_datetime64_any_dtype(df_in[c])]
